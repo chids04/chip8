@@ -1,0 +1,15 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-Iinclude",
+      "-o",
+      "build/chip8.o",
+      "src/chip8.cpp"
+    ],
+    "directory": "/home/c/programming/chip8",
+    "file": "/home/c/programming/chip8/src/chip8.cpp",
+    "output": "/home/c/programming/chip8/build/chip8.o"
+  }
+]

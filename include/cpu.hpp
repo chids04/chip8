@@ -1,14 +1,13 @@
-#include <climits>
 #include <string>
 
 class Chip8 {
 
 public:
     unsigned short df;
-    void loadGame(std::string str);
-
+    void loadGame(char *path);
 private:
     unsigned char sp;
+    unsigned char key[16];
     unsigned short opcode;
     unsigned short I;
     unsigned short pc; 
