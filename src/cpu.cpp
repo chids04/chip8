@@ -14,10 +14,15 @@ void Chip8::loadGame(char *path){
     //sets pointer to end of file, computes file size and goes back to the beginning
     game.seekg(0, std::ios::end);
     std::streampos gameSize = game.tellg();
-    game.seekg(0, std::ios::beg);
+    char *buff = new char[gameSize];
 
     //data casted as char* so it can be read
+    game.seekg(0, std::ios::beg);
     game.read(reinterpret_cast<char*>(&memory[0x200]), gameSize);
     game.close();
+
+}
+
+void Chip8::loadFonts(){
 
 }
