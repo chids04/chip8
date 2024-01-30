@@ -1,20 +1,23 @@
 #include <string>
+#include <cstdint>
 
 class Chip8 {
 
 public:
     unsigned short df;
     void loadGame(char *path);
+    void loadFonts();
+
 private:
-    unsigned char sp;
-    unsigned char key[16];
-    unsigned short opcode;
-    unsigned short I;
-    unsigned short pc; 
-    unsigned short delayTimeTimeer;
-    unsigned short soundTimer;
-    unsigned char memory[4096];
-    unsigned char V[16];
-    unsigned short stack[16];
-    unsigned short gfx[64*32];
+    uint8_t sp;
+    uint16_t opcode;
+    uint16_t I;
+    uint16_t pc; 
+    uint8_t delayTimer;
+    uint8_t soundTimer;
+    uint8_t key[16];
+    uint8_t memory[4096];
+    uint8_t V[16];
+    uint16_t stack[16];
+    uint32_t gfx[64*32];
 };
