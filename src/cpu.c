@@ -15,7 +15,6 @@ void Chip8::loadGame(char *path){
     game.seekg(0, std::ios::end);
     std::streampos gameSize = game.tellg();
     game.seekg(0, std::ios::beg);
-
     //data casted as char* so it can be read
     game.read(reinterpret_cast<char*>(&memory[0x200]), gameSize);
     game.close();
