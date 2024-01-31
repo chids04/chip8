@@ -5,8 +5,8 @@ class Chip8 {
 
 public:
     unsigned short df;
+    Chip8();
     void loadGame(char *path);
-    void loadFonts();
 
 private:
     uint8_t sp;
