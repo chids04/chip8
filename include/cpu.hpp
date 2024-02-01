@@ -20,4 +20,5 @@ private:
     uint8_t V[16];
     uint16_t stack[16];
     uint32_t gfx[64*32];
+    uint8_t fonts[80];
 };
