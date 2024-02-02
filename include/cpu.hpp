@@ -4,9 +4,10 @@
 class Chip8 {
 
 public:
-    unsigned short df;
+    int df;
     Chip8();
     void loadGame(char *path);
+    void emulatecycle();
 
 private:
     uint8_t sp;

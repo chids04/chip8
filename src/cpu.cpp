@@ -33,7 +33,7 @@ Chip8::Chip8(){
     std::cout << sizeof(memory);
 
     std::fill_n(memory, sizeof(memory),0);
-    std::cout << memory[3000];
+    std::cout << memory[3000] << "\n";
 
     std::fill_n(V, sizeof(V), 0);
     std::fill_n(stack, sizeof(stack), 0);
@@ -61,7 +61,38 @@ Chip8::Chip8(){
 	0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
-
-    //need to copy the contents of this array into chip8 memory
     
+    //need to copy the contents of this array into chip8 memory
+    std::copy(fonts, fonts+80, &memory[0x050]);
+     
 }
+
+void Chip8::emulatecycle(){
+    //fetch decode and execute
+    std::cout << static_cast<int>(memory[0x050])<< "\n";
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,6 +4,7 @@
 int main(){
 
     Chip8 cpu;
+    cpu.emulatecycle();
     
     
     return 0;
