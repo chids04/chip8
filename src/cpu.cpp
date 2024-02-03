@@ -26,7 +26,7 @@ void Chip8::loadGame(char *path){
 Chip8::Chip8(char *path){
     //initializing registers
 
-    sp = 0, opcode = 0, pc = 0, delayTimer = 0, soundTimer = 0;
+    sp = 0, opcode = 0, pc = 0, delayTimer = 0, soundTimer = 0, df = false;
 
     pc = 0x200; //program starts at this address
    
@@ -74,6 +74,7 @@ void Chip8::emulatecycle(){
     //fetch
     opcode = memory[pc] << 8 | memory[pc+1]; //combining into one 16bit instruction
     pc += 2;
+    df = false; //setting draw flag to false
 
     std::cout << std::hex << static_cast<int>(opcode) << "\n";
 
@@ -98,6 +99,7 @@ void Chip8::emulatecycle(){
             if((opcode & GET_FOURTH_NIB) == 0xE){
                 //clear the screen (CLS)
                 std::fill(std::begin(gfx), std::end(gfx), 0); 
+                df = true;
             }
             else{
                 //return from a subroutine (RET)
