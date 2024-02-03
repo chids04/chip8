@@ -1,11 +1,19 @@
 #include <string>
 #include <cstdint>
 
+#define NIB_MASK(n) (0xF << ((n * 4))) 
+#define GET_FIRST_NIB (NIB_MASK(3))
+#define GET_SECOND_NIB (NIB_MASK(2))
+#define GET_THIRD_NIB (NIB_MASK(1))
+#define GET_FOURTH_NIB (NIB_MASK(0))
+#define GET_SEC_BYTE (0xFF)
+#define GET_12_BIT (0xFFF)
+
 class Chip8 {
 
 public:
-    int df;
-    Chip8();
+    bool df;
+    Chip8(char *path);
     void loadGame(char *path);
     void emulatecycle();
 
@@ -22,4 +30,5 @@ private:
     uint16_t stack[16];
     uint32_t gfx[64*32];
     uint8_t fonts[80];
+    
 };

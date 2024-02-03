@@ -23,7 +23,7 @@ void Chip8::loadGame(char *path){
 
 }
 
-Chip8::Chip8(){
+Chip8::Chip8(char *path){
     //initializing registers
 
     sp = 0, opcode = 0, pc = 0, delayTimer = 0, soundTimer = 0;
@@ -64,12 +64,66 @@ Chip8::Chip8(){
     
     //need to copy the contents of this array into chip8 memory
     std::copy(fonts, fonts+80, &memory[0x050]);
+
+    loadGame(path);
      
 }
 
 void Chip8::emulatecycle(){
-    //fetch decode and execute
-    std::cout << static_cast<int>(memory[0x050])<< "\n";
+    
+    //fetch
+    opcode = memory[pc] << 8 | memory[pc+1]; //combining into one 16bit instruction
+    pc += 2;
+
+    std::cout << std::hex << static_cast<int>(opcode) << "\n";
+
+    //decode
+    uint8_t instruction = (opcode & GET_FIRST_NIB) >> 12;
+
+    std::cout <<
+
+        std::hex <<
+        "instruction: " <<
+        static_cast<int>(instruction) << "\n" <<
+        "second nib: " <<
+        static_cast<int>((opcode & GET_SECOND_NIB) >> 8) << "\n" <<
+        "third nib: " <<
+        static_cast<int>((opcode & GET_THIRD_NIB) >> 4) << "\n" <<
+        "fourth nib: " <<
+        static_cast<int>((opcode & GET_FOURTH_NIB)) << "\n"; 
+        
+    
+    switch(instruction){
+        case 0x0: //two instructions have this code
+            if((opcode & GET_FOURTH_NIB) == 0xE){
+                //clear the screen (CLS)
+                std::fill(std::begin(gfx), std::end(gfx), 0); 
+            }
+            else{
+                //return from a subroutine (RET)
+                pc = stack[sp];
+                sp--;
+            }
+            
+            break;
+       
+        case 0x1:
+            //jump to memory address at mem location NNN
+            pc = memory[opcode & GET_12_BIT];
+            break;
+
+        case 0x2:
+            //call subroutine at mem location NNN
+            sp++;
+            stack[sp] = pc;
+            pc = memory[opcode & GET_12_BIT];
+            break;
+
+        case 0x7:
+            //add kk to reg Vx and store result in reg Vx
+            V[opcode & GET_SECOND_NIB] += opcode & GET_SEC_BYTE;
+            std::cout << static_cast<int>(V[opcode & GET_SECOND_NIB]) << "\n"; 
+    }
 
 }
 
