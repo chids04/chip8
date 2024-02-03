@@ -16,11 +16,17 @@ void Chip8::loadGame(char *path){
     game.seekg(0, std::ios::end);
     std::streampos gameSize = game.tellg();
     game.seekg(0, std::ios::beg);
+    
+    char *buf = new char[gameSize];
 
-    //memory array casted as char* so it can be read into
-    game.read(reinterpret_cast<char*>(&memory[0x200]), gameSize);
+    game.read(buf, gameSize);
     game.close();
 
+    for(int i=0; i<gameSize && i<4096; i++){
+        memory[512 + i] = buf[i];
+    }
+
+    delete[] buf;
 }
 
 Chip8::Chip8(char *path){
@@ -30,13 +36,10 @@ Chip8::Chip8(char *path){
 
     pc = 0x200; //program starts at this address
    
-    std::cout << sizeof(memory);
 
-    std::fill_n(memory, sizeof(memory),0);
-    std::cout << memory[3000] << "\n";
-
-    std::fill_n(V, sizeof(V), 0);
-    std::fill_n(stack, sizeof(stack), 0);
+    std::fill(memory, memory + sizeof(memory), 0);
+    std::fill(V, V + sizeof(V), 0);
+    std::fill(stack, stack + sizeof(stack), 0);
 
     //setting up the input keys and loading into memory
     for(uint8_t i = 0x00; i <= 0xF; i++){
@@ -78,6 +81,7 @@ void Chip8::emulatecycle(){
 
     std::cout << std::hex << static_cast<int>(opcode) << "\n";
 
+
     //decode
     uint8_t instruction = (opcode & GET_FIRST_NIB) >> 12;
 
@@ -91,7 +95,11 @@ void Chip8::emulatecycle(){
         "third nib: " <<
         static_cast<int>((opcode & GET_THIRD_NIB) >> 4) << "\n" <<
         "fourth nib: " <<
-        static_cast<int>((opcode & GET_FOURTH_NIB)) << "\n"; 
+        static_cast<int>((opcode & GET_FOURTH_NIB)) << "\n" <<
+        "get second byte: " <<
+        static_cast<int>(opcode & GET_SEC_BYTE) << "\n" <<
+        "get lower 12 bits: " <<
+        static_cast<int>(opcode & GET_12_BIT) << "\n";
         
     
     switch(instruction){
@@ -111,7 +119,7 @@ void Chip8::emulatecycle(){
        
         case 0x1:
             //jump to memory address at mem location NNN
-            pc = memory[opcode & GET_12_BIT];
+            pc = opcode & GET_12_BIT; 
             break;
 
         case 0x2:
@@ -121,14 +129,57 @@ void Chip8::emulatecycle(){
             pc = memory[opcode & GET_12_BIT];
             break;
 
+        case 0x3:
+            //skip next instruction if Vx == kk
+            if(V[(opcode & GET_SECOND_NIB) >> 8] == (opcode & GET_SEC_BYTE)){
+                pc+=2; 
+            }
+            break;
+
+        case 0x4:
+            //skip next instruction if Vx != kk
+            if(V[(opcode & GET_SECOND_NIB) >> 8] != (opcode & GET_SEC_BYTE)){
+                pc+=2; 
+            } 
+            break;
+
+        case 0x5:
+            //skip next instruction if Vx == Vy
+            if(V[(opcode & GET_SECOND_NIB) >> 8] == V[(opcode & GET_THIRD_NIB) >> 4]){
+                pc+=2;
+            }
+            break;
+        
+        case 0x6:
+            //value kk put into Vx
+            V[(opcode & GET_SECOND_NIB) >> 8] = opcode & GET_SEC_BYTE;
+            break;
+
         case 0x7:
             //add kk to reg Vx and store result in reg Vx
-            V[opcode & GET_SECOND_NIB] += opcode & GET_SEC_BYTE;
-            std::cout << static_cast<int>(V[opcode & GET_SECOND_NIB]) << "\n"; 
+            V[(opcode & GET_SECOND_NIB) >> 8] += opcode & GET_SEC_BYTE;
+            std::cout << std::hex << V[(opcode & GET_SECOND_NIB) >> 8] << "\n";
+            break;
+
+        case 0x8:
+            //multiple opcodes start with this nibble so i check the last nibble
+            switch(opcode & GET_FOURTH_NIB){
+                case 0x0:
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_THIRD_NIB) >> 4];
+                    break;
+                
+                case 0x1:
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] ^ V[(opcode & GET_THIRD_NIB) >> 4];
+                    break;                
+                
+                case 0x2:
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] & V[(opcode & GET_THIRD_NIB) >> 4];
+                    break;
+            }
+            break;
     }
 
 }
-
 
 
 

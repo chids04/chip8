@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I$(IDIR) 
+CFLAGS=-I$(IDIR) -Wall -Wextra -pedantic
 IDIR=include
 SRCDIR=src
 

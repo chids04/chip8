@@ -6,8 +6,8 @@
 #define GET_SECOND_NIB (NIB_MASK(2))
 #define GET_THIRD_NIB (NIB_MASK(1))
 #define GET_FOURTH_NIB (NIB_MASK(0))
-#define GET_SEC_BYTE (0xFF)
-#define GET_12_BIT (0xFFF)
+#define GET_SEC_BYTE (0x00FF)
+#define GET_12_BIT (0x0FFF)
 
 class Chip8 {
 
@@ -29,6 +29,5 @@ private:
     uint8_t V[16];
     uint16_t stack[16];
     uint32_t gfx[64*32];
-    uint8_t fonts[80];
     
 };
