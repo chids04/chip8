@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <stdlib.h>
+#include <time.h>
 #include "cpu.hpp"
 
 void Chip8::loadGame(char *path){
@@ -22,11 +24,13 @@ void Chip8::loadGame(char *path){
     game.read(buf, gameSize);
     game.close();
 
-    for(int i=0; i<gameSize && i<4096; i++){
+    for(int i=0; i<gameSize && (i + 512) < 4096; i++){
         memory[512 + i] = buf[i];
     }
 
     delete[] buf;
+
+    //initalise random variable
 }
 
 Chip8::Chip8(char *path){
@@ -69,6 +73,7 @@ Chip8::Chip8(char *path){
     std::copy(fonts, fonts+80, &memory[0x050]);
 
     loadGame(path);
+
      
 }
 
@@ -76,7 +81,7 @@ void Chip8::emulatecycle(){
     
     //fetch
     opcode = memory[pc] << 8 | memory[pc+1]; //combining into one 16bit instruction
-    pc += 2;
+    pc += 1;
     df = false; //setting draw flag to false
 
     std::cout << std::hex << static_cast<int>(opcode) << "\n";
@@ -132,21 +137,21 @@ void Chip8::emulatecycle(){
         case 0x3:
             //skip next instruction if Vx == kk
             if(V[(opcode & GET_SECOND_NIB) >> 8] == (opcode & GET_SEC_BYTE)){
-                pc+=2; 
+                pc+=1; 
             }
             break;
 
         case 0x4:
             //skip next instruction if Vx != kk
             if(V[(opcode & GET_SECOND_NIB) >> 8] != (opcode & GET_SEC_BYTE)){
-                pc+=2; 
+                pc+=1; 
             } 
             break;
 
         case 0x5:
             //skip next instruction if Vx == Vy
             if(V[(opcode & GET_SECOND_NIB) >> 8] == V[(opcode & GET_THIRD_NIB) >> 4]){
-                pc+=2;
+                pc+=1;
             }
             break;
         
@@ -165,18 +170,106 @@ void Chip8::emulatecycle(){
             //multiple opcodes start with this nibble so i check the last nibble
             switch(opcode & GET_FOURTH_NIB){
                 case 0x0:
+                    //sets Vx = Vy
                     V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_THIRD_NIB) >> 4];
                     break;
                 
                 case 0x1:
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] ^ V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] | V[(opcode & GET_THIRD_NIB) >> 4];
                     break;                
                 
                 case 0x2:
                     V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] & V[(opcode & GET_THIRD_NIB) >> 4];
                     break;
+
+                case 0x3:
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] ^ V[(opcode & GET_THIRD_NIB) >> 4];
+                    break; 
+
+                case 0x4:
+                    //add Vx and Vy, if result > 8 bits, the set carry flag. then store lower 8 bits of number
+                    {
+                        uint16_t result = V[(opcode & GET_SECOND_NIB) >> 8] + V[(opcode & GET_THIRD_NIB) >> 4];
+                        
+                        if(result > 255){
+                            V[0xF] = 1;
+                        }
+                        else{
+                            V[0xF] = 0;
+                        }
+                        
+                        
+                        //store lowest 8 bits
+                        V[(opcode & GET_SECOND_NIB) >> 8] = result & GET_SEC_BYTE;
+                        break;
+                    }
+
+                case 0x5:
+                    // minus Vx and Vy, if Vx > Vy then set carry register, else set to 0
+                    {
+                        if(V[(opcode & GET_SECOND_NIB) >> 8] >= V[(opcode & GET_THIRD_NIB) >> 4]){
+                            V[0xF] = 1;
+                        }
+                        else{
+                            V[0xF] = 0;
+                        }
+
+                        V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] - V[(opcode & GET_THIRD_NIB) >> 4];
+                    }
+                    break;
+
+                case 0x6:
+                    if((V[(opcode & GET_SECOND_NIB) >> 8] & 0b0000000000000001) == 1 ){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
+                    
+                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] / 2;
+                    break;
+
+                case 0x7:
+                    if(V[(opcode & GET_THIRD_NIB) >> 4] > V[(opcode & GET_SECOND_NIB) >> 8]){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
+                    
+                    V[(opcode & GET_SECOND_NIB) >> 8] -= V[(opcode & GET_THIRD_NIB) >> 4];
+                    break;
+                
+                case 0xE:
+                    if(((V[(opcode & GET_SECOND_NIB) >> 8] & 0b1000000000000000) >> 15) == 1){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
+
+                    V[(opcode & GET_SECOND_NIB) >> 8] *= V[(opcode & GET_SECOND_NIB) >> 8] * 2; 
+                    break;
+
             }
+
             break;
+
+        case 0x9:
+            if(V[(opcode & GET_SECOND_NIB) >> 8] != V[(opcode & GET_SECOND_NIB) >> 8]){
+                pc += 1;
+            }
+            
+            break;
+
+        case 0xA:
+            I = opcode & GET_THIRD_NIB;
+            break;
+
+        case 0xB:
+            pc = V[0x0] + V[opcode & GET_12_BIT];
+            break;
+            
     }
 
 }
