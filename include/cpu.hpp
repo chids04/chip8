@@ -1,5 +1,6 @@
 #include <string>
 #include <cstdint>
+#include <random>
 
 #define NIB_MASK(n) (0xF << ((n * 4))) 
 #define GET_FIRST_NIB (NIB_MASK(3))
@@ -30,5 +31,6 @@ private:
     uint16_t stack[16];
     uint32_t gfx[64*32];
 
-    
+    std::mt19937 gen;    
+    uint8_t getRand();
 };

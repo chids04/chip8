@@ -74,7 +74,14 @@ Chip8::Chip8(char *path){
 
     loadGame(path);
 
+    gen.seed(std::random_device()());
+
      
+}
+
+uint8_t Chip8::getRand(){
+    std::uniform_int_distribution<uint8_t> distribution(0,255);
+    return distribution(gen);
 }
 
 void Chip8::emulatecycle(){
@@ -85,7 +92,6 @@ void Chip8::emulatecycle(){
     df = false; //setting draw flag to false
 
     std::cout << std::hex << static_cast<int>(opcode) << "\n";
-
 
     //decode
     uint8_t instruction = (opcode & GET_FIRST_NIB) >> 12;
@@ -270,7 +276,10 @@ void Chip8::emulatecycle(){
             pc = V[0x0] + V[opcode & GET_12_BIT];
             break;
             
+        case 0xC:
+            break;
     }
+        
 
 }
 
