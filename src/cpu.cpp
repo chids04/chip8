@@ -91,31 +91,41 @@ void Chip8::emulatecycle(){
     pc += 1;
     df = false; //setting draw flag to false
 
-    std::cout << std::hex << static_cast<int>(opcode) << "\n";
+    std::cout << std::hex << "opcode: " << static_cast<int>(opcode) << "\n";
 
     //decode
     uint8_t instruction = (opcode & GET_FIRST_NIB) >> 12;
 
+    uint8_t x = (opcode & GET_SECOND_NIB) >> 8;
+    uint8_t y = (opcode & GET_THIRD_NIB) >> 4;
+    uint8_t z = (opcode & GET_FOURTH_NIB);
+    uint8_t kk = (opcode & GET_SEC_BYTE);
+    uint16_t nnn = (opcode & GET_12_BIT);
+
     std::cout <<
 
         std::hex <<
-        "instruction: " <<
+        "MSB: " <<
         static_cast<int>(instruction) << "\n" <<
+
         "second nib: " <<
-        static_cast<int>((opcode & GET_SECOND_NIB) >> 8) << "\n" <<
+        static_cast<int>(x) << "\n" <<
+
         "third nib: " <<
-        static_cast<int>((opcode & GET_THIRD_NIB) >> 4) << "\n" <<
+        static_cast<int>(y) << "\n" <<
+
         "fourth nib: " <<
-        static_cast<int>((opcode & GET_FOURTH_NIB)) << "\n" <<
-        "get second byte: " <<
-        static_cast<int>(opcode & GET_SEC_BYTE) << "\n" <<
-        "get lower 12 bits: " <<
-        static_cast<int>(opcode & GET_12_BIT) << "\n";
-        
-    
+        static_cast<int>(z) << "\n" <<
+
+        "lower byte: " <<
+        static_cast<int>(kk) << "\n" <<
+
+        "lower 12 bits: " <<
+        static_cast<int>(nnn) << "\n";
+ 
     switch(instruction){
         case 0x0: //two instructions have this code
-            if((opcode & GET_FOURTH_NIB) == 0xE){
+            if((z) == 0xE){
                 //clear the screen (CLS)
                 std::fill(std::begin(gfx), std::end(gfx), 0); 
                 df = true;
@@ -130,72 +140,72 @@ void Chip8::emulatecycle(){
        
         case 0x1:
             //jump to memory address at mem location NNN
-            pc = opcode & GET_12_BIT; 
+            pc = nnn; 
             break;
 
         case 0x2:
             //call subroutine at mem location NNN
             sp++;
             stack[sp] = pc;
-            pc = memory[opcode & GET_12_BIT];
+            pc = memory[nnn];
             break;
 
         case 0x3:
             //skip next instruction if Vx == kk
-            if(V[(opcode & GET_SECOND_NIB) >> 8] == (opcode & GET_SEC_BYTE)){
+            if(V[x] == (kk)){
                 pc+=1; 
             }
             break;
 
         case 0x4:
             //skip next instruction if Vx != kk
-            if(V[(opcode & GET_SECOND_NIB) >> 8] != (opcode & GET_SEC_BYTE)){
+            if(V[x] != (kk)){
                 pc+=1; 
             } 
             break;
 
         case 0x5:
             //skip next instruction if Vx == Vy
-            if(V[(opcode & GET_SECOND_NIB) >> 8] == V[(opcode & GET_THIRD_NIB) >> 4]){
+            if(V[x] == V[y]){
                 pc+=1;
             }
             break;
         
         case 0x6:
             //value kk put into Vx
-            V[(opcode & GET_SECOND_NIB) >> 8] = opcode & GET_SEC_BYTE;
+            V[x] = kk;
             break;
 
         case 0x7:
             //add kk to reg Vx and store result in reg Vx
-            V[(opcode & GET_SECOND_NIB) >> 8] += opcode & GET_SEC_BYTE;
-            std::cout << std::hex << V[(opcode & GET_SECOND_NIB) >> 8] << "\n";
+            V[x] += kk;
+            std::cout << std::hex << V[x] << "\n";
             break;
 
         case 0x8:
             //multiple opcodes start with this nibble so i check the last nibble
-            switch(opcode & GET_FOURTH_NIB){
+            switch(z){
                 case 0x0:
                     //sets Vx = Vy
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[x] = V[y];
                     break;
                 
                 case 0x1:
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] | V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[x] = V[x] | V[y];
                     break;                
                 
                 case 0x2:
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] & V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[x] = V[x] & V[y];
                     break;
 
                 case 0x3:
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] ^ V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[x] = V[x] ^ V[y];
                     break; 
 
                 case 0x4:
                     //add Vx and Vy, if result > 8 bits, the set carry flag. then store lower 8 bits of number
                     {
-                        uint16_t result = V[(opcode & GET_SECOND_NIB) >> 8] + V[(opcode & GET_THIRD_NIB) >> 4];
+                        uint16_t result = V[x] + V[y];
                         
                         if(result > 255){
                             V[0xF] = 1;
@@ -206,55 +216,55 @@ void Chip8::emulatecycle(){
                         
                         
                         //store lowest 8 bits
-                        V[(opcode & GET_SECOND_NIB) >> 8] = result & GET_SEC_BYTE;
+                        V[x] = result & GET_SEC_BYTE;
                         break;
                     }
 
                 case 0x5:
                     // minus Vx and Vy, if Vx > Vy then set carry register, else set to 0
                     {
-                        if(V[(opcode & GET_SECOND_NIB) >> 8] >= V[(opcode & GET_THIRD_NIB) >> 4]){
+                        if(V[x] >= V[y]){
                             V[0xF] = 1;
                         }
                         else{
                             V[0xF] = 0;
                         }
 
-                        V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] - V[(opcode & GET_THIRD_NIB) >> 4];
+                        V[x] = V[x] - V[y];
                     }
                     break;
 
                 case 0x6:
-                    if((V[(opcode & GET_SECOND_NIB) >> 8] & 0b0000000000000001) == 1 ){
+                    if((V[x] & 0b0000000000000001) == 1 ){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
                     
-                    V[(opcode & GET_SECOND_NIB) >> 8] = V[(opcode & GET_SECOND_NIB) >> 8] / 2;
+                    V[x] = V[x] / 2;
                     break;
 
                 case 0x7:
-                    if(V[(opcode & GET_THIRD_NIB) >> 4] > V[(opcode & GET_SECOND_NIB) >> 8]){
+                    if(V[y] > V[x]){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
                     
-                    V[(opcode & GET_SECOND_NIB) >> 8] -= V[(opcode & GET_THIRD_NIB) >> 4];
+                    V[x] -= V[y];
                     break;
                 
                 case 0xE:
-                    if(((V[(opcode & GET_SECOND_NIB) >> 8] & 0b1000000000000000) >> 15) == 1){
+                    if(((V[x] & 0b1000000000000000) >> 15) == 1){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
 
-                    V[(opcode & GET_SECOND_NIB) >> 8] *= V[(opcode & GET_SECOND_NIB) >> 8] * 2; 
+                    V[x] *= V[x] * 2; 
                     break;
 
             }
@@ -262,7 +272,7 @@ void Chip8::emulatecycle(){
             break;
 
         case 0x9:
-            if(V[(opcode & GET_SECOND_NIB) >> 8] != V[(opcode & GET_SECOND_NIB) >> 8]){
+            if(V[x] != V[y]){
                 pc += 1;
             }
             
@@ -273,11 +283,33 @@ void Chip8::emulatecycle(){
             break;
 
         case 0xB:
-            pc = V[0x0] + V[opcode & GET_12_BIT];
+            pc = V[0x0] + nnn;
             break;
             
         case 0xC:
+        {
+            uint8_t result = getRand() & kk;
+            V[x] = result;
+        }        
             break;
+
+        case 0xD:
+            uint8_t pixel;
+            uint8_t xcoord = x;
+            uint8_t ycord = y;
+
+            for(uint8_t i=0; i<z; i++){
+                pixel = memory[I+i];
+                
+                for(int j=0; j<8; i++){
+                    if((pixel & (0xF >> i)) != 0){
+                        if(gfx[i + xcoord + (j + ycord) * 64]){
+
+                        }
+                    }
+                }
+                
+            }
     }
         
 
