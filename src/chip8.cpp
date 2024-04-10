@@ -27,9 +27,13 @@ int main(int argc, char *argv[]){
         }
     
         // Present the renderer
-        SDL_RenderPresent(cpu.renderer); 
         cpu.emulatecycle();
-        
+
+        SDL_RenderClear(cpu.renderer);
+        cpu.updateScreen();
+        SDL_RenderPresent(cpu.renderer); 
+
+
         if(keyPressed){
             cpu.clearKeys();
             keyPressed = false;

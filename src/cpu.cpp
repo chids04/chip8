@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <bitset>
 #include <stdlib.h>
 #include <time.h>
 #include "cpu.hpp"
@@ -156,19 +157,22 @@ void Chip8::emulatecycle(){
  
     switch(instruction){
         case 0x0: //two instructions have this code
-            if(z == 0x0){
+            if(kk == 0xE0){
                 //clear the screen (CLS)
                 std::cout << "instruction: 00E0\n";
 
-                std::fill(std::begin(gfx), std::end(gfx), 0); 
+                for(int i=0; i<(64*32); i++){
+                    gfx[i] = 0;
+                }
+
                 df = true;
             }
-            else if(z == 0xE){
+            else if(kk == 0xEE){
                 //return from a subroutine (RET)
                 std::cout << "instruction 00EE\n";
 
-                pc = stack[sp];
                 sp--;
+                pc = stack[sp];
             }
             break;
        
@@ -183,8 +187,8 @@ void Chip8::emulatecycle(){
             //call subroutine at mem location NNN
             std::cout << "instruction 2nnn\n";
             
-            sp++;
             stack[sp] = pc;
+            sp++;
             pc = memory[nnn];
             break;
 
@@ -193,7 +197,7 @@ void Chip8::emulatecycle(){
             std::cout << "instruction 3xkkk\n";
 
             if(V[x] == (kk)){
-                pc+=1; 
+                pc+=2; 
             }
             break;
 
@@ -380,26 +384,40 @@ void Chip8::emulatecycle(){
             std::cout << "instruction Dxyn\n";
 
             {
-                uint8_t pixel;
-                uint8_t xcoord = x;
-                uint8_t ycord = y;
-                V[0xF] = 0;
+            unsigned short x = V[(opcode & 0x0F00) >> 8];
+            unsigned short y = V[(opcode & 0x00F0) >> 4];
+            unsigned short height = opcode & 0x000F;
+            unsigned short pixel;
 
-                for(uint8_t i=0; i<z; i++){
-                    pixel = memory[I+i];
-                    
-                    for(int j=0; j<8; j++){
-                        if((pixel & (0xF >> j)) != 0){
-                            if(gfx[j + xcoord + (i + ycord) * 64] == 1){
-                                V[0xF]  = 1;
-                            }
-                            gfx[i + xcoord + (j + ycord) * 64] ^= 1;
+            V[0xF] = 0;
+            for (int yline = 0; yline < height; yline++)
+            {
+                pixel = memory[I + yline];
+                for(int xline = 0; xline < 8; xline++)
+                {
+                    if((pixel & (0x80 >> xline)) != 0)
+                    {
+                        if(gfx[(x + xline + ((y + yline) * 64))] == 1)
+                        {
+                            V[0xF] = 1;
                         }
+                        gfx[x + xline + ((y + yline) * 64)] ^= 1;
                     }
-                    
+                }
+            }
+
+            df = true;
+            }
+            
+            for(int i=0; i<(64*32); ++i){
+                std::cout << gfx[i];
+                if ((i + 1) % 64 == 0) {
+                    std::cout << std::endl; // Start a new line after each row
                 }
             }
             
+
+
             break;
         
         case 0xE:
@@ -526,30 +544,7 @@ void Chip8::emulatecycle(){
     std::cout << "dt: " << static_cast<int>(delayTimer) << "\n";
     std::cout << "st: " << static_cast<int>(soundTimer) << "\n";
     std::cout << "df: " << static_cast<int>(df) << "\n";
-       
+    std::cout << "vf: " << static_cast<int>(V[0xF]) << "\n";
     std::cout << "##################################" << "\n\n";
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

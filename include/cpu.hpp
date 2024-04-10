@@ -6,6 +6,7 @@
 #include <random>
 #include <chrono>
 #include <SDL2/SDL.h>
+#include <thread>
 
 #define NIB_MASK(n) (0xF << ((n * 4))) 
 #define GET_FIRST_NIB (NIB_MASK(3))
@@ -18,6 +19,10 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 320
 
+typedef struct{
+    SDL_Rect r;
+    int colours[4];
+} Pixel;
 
 class Chip8 {
 
@@ -32,6 +37,7 @@ public:
     void handleKey(SDL_Event *e);
     void clearKeys();
     bool initWin();
+    void updateScreen();
 
 private:
     
@@ -45,7 +51,9 @@ private:
     uint8_t memory[4096];
     uint8_t V[16];
     uint16_t stack[16];
+
     uint32_t gfx[64*32];
+    Pixel pixelBuffer[64*32];
 
     std::mt19937 gen;    
     uint8_t getRand();
