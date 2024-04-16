@@ -288,7 +288,7 @@ void Chip8::emulatecycle(){
                     std::cout << "instruction 8xy5\n";
                     
                     {
-                        if(V[x] >= V[y]){
+                        if(V[x] > V[y]){
                             V[0xF] = 1;
                         }
                         else{
@@ -310,11 +310,11 @@ void Chip8::emulatecycle(){
                         V[0xF] = 0;
                     }
                     
-                    V[x] = V[x] / 2;
+                    V[x] >>= 1;
                     break;
 
                 case 0x7:
-                    //set VF if Vx > Vy, then Vx = Vx - Vy
+                    //set VF if Vy > Vx, then Vy = Vy - Vx
                     std::cout << "instruction 8xy7\n";
 
                     if(V[y] > V[x]){
@@ -324,7 +324,7 @@ void Chip8::emulatecycle(){
                         V[0xF] = 0;
                     }
                     
-                    V[x] -= V[y];
+                    V[y] -= V[x];
                     break;
                 
                 case 0xE:
@@ -358,8 +358,9 @@ void Chip8::emulatecycle(){
         case 0xA:
             //set I to nnn
             std::cout << "instruction Annn\n";
-
-            I = opcode & GET_12_BIT;
+            std::cout << "I: " << static_cast<int>(I) << "\n";
+            I = nnn;
+            //std::this_thread::sleep_for(std::chrono::seconds(3));
             break;
 
         case 0xB:
@@ -545,6 +546,7 @@ void Chip8::emulatecycle(){
     std::cout << "st: " << static_cast<int>(soundTimer) << "\n";
     std::cout << "df: " << static_cast<int>(df) << "\n";
     std::cout << "vf: " << static_cast<int>(V[0xF]) << "\n";
+    std::cout << "I: " << static_cast<int>(I) << "\n";
     std::cout << "##################################" << "\n\n";
 
 }
