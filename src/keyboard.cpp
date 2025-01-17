@@ -1,75 +1,39 @@
 #include "cpu.hpp"
 #include <algorithm>
+#include <unordered_map>
 
-void Chip8::handleKey(SDL_Event *e){
-    switch(e->key.keysym.sym){
-        case SDLK_1:
-            key[0] = 1;
-            break;
+namespace Chip8
+{
+void Cpu::handleKey(SDL_Event *e){
+    SDL_assert(e->type == SDL_EVENT_KEY_DOWN);
 
-        case SDLK_2:
-            key[1] = 1;
-            break;
-        
-        case SDLK_3:
-            key[2] = 1;
-            break;
-        
-        case SDLK_4:
-            key[3] = 1;
-            break;
-        
-        case SDLK_q:
-            key[4] = 1;
-            break;
-        
-        case SDLK_w:
-            key[5] = 1;
-            break;
-        
-        case SDLK_e:
-            key[6] = 1;
-            break;
+   static const std::unordered_map<SDL_Scancode, int> keyMap = {
+        {SDL_SCANCODE_1, 0},
+        {SDL_SCANCODE_2, 1},
+        {SDL_SCANCODE_3, 2},
+        {SDL_SCANCODE_4, 3},
+        {SDL_SCANCODE_Q, 4},
+        {SDL_SCANCODE_W, 5},
+        {SDL_SCANCODE_E, 6},
+        {SDL_SCANCODE_R, 7},
+        {SDL_SCANCODE_A, 8},
+        {SDL_SCANCODE_S, 9},
+        {SDL_SCANCODE_D, 10},
+        {SDL_SCANCODE_F, 11},
+        {SDL_SCANCODE_Z, 12},
+        {SDL_SCANCODE_X, 13},
+        {SDL_SCANCODE_C, 14},
+        {SDL_SCANCODE_V, 15}
+    };
 
-        case SDLK_r:
-            key[7] = 1;
-            break;
-        
-        case SDLK_a:
-            key[8] = 1;
-            break;
-        
-        case SDLK_s:
-            key[9] = 1;
-            break;
-        
-        case SDLK_d:
-            key[10] = 1;
-            break;
-        
-        case SDLK_f:
-            key[11] = 1;
-            break;
+    auto it = keyMap.find(e->key.scancode);
+    if (it != keyMap.end()) {
+        key[it->second] = 1;
+    } 
 
-        case SDLK_z:
-            key[12] = 1;
-            break;
-
-        case SDLK_x:
-            key[13] = 1;
-            break;
-
-        case SDLK_c:
-            key[14] = 1;
-            break;
-
-        case SDLK_v:
-            key[15] = 1;
-            break;
-
-    }
 }
 
-void Chip8::clearKeys(){
+void Cpu::clearKeys(){
     std::fill(std::begin(key), std::end(key), 0);
+}
 }
